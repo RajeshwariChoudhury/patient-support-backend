@@ -1,18 +1,21 @@
-const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
-const cors = require('cors');
-const dotenv = require('dotenv');
-const OpenAI = require('openai');
+import express from 'express';
+import http from 'http';
+import { Server } from 'socket.io';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import OpenAI from 'openai';
 
 dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
+
 const io = new Server(server, {
-  cors: { origin: '*' }
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
 });
-app.use(cors());
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -28,7 +31,7 @@ io.on('connection', (socket) => {
         messages: [
           { role: 'system', content: "You're a friendly support chatbot helping patients with emotional support and appointments." },
           { role: 'user', content: data.message }
-        ],
+        ]
       });
 
       socket.emit('receive_message', {
@@ -36,10 +39,10 @@ io.on('connection', (socket) => {
         message: response.choices[0].message.content
       });
     } catch (err) {
-      console.error("OpenAI Error:", err);
+      console.error(err);
       socket.emit('receive_message', {
         role: 'bot',
-        message: "Sorry, I couldn't process your request right now. Please try again later."
+        message: "Sorry, I couldn't respond right now. Try again later."
       });
     }
   });
